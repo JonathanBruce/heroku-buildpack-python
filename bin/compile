@@ -282,6 +282,52 @@ source "$BIN_DIR/steps/sqlite3"
 buildpack_sqlite3_install
 mtime "sqlite3.install.time" "${start}"
 
+set -eo pipefail
+
+[ "$BUILDPACK_XTRACE" ] && set -o xtrace
+
+# Paths.
+BIN_DIR=$(cd $(dirname $0); pwd) # absolute path
+ROOT_DIR=$(dirname $BIN_DIR)
+BUILD_DIR=$1
+CACHE_DIR=$2
+ENV_DIR=$3
+
+source $BIN_DIR/utils
+
+PYTHON="$BUILD_DIR/.heroku/python/bin/python"
+PIP="$BUILD_DIR/.heroku/python/bin/pip"
+# default PYTHONHOME does not yet exist
+PYTHONHOME="$BUILD_DIR/.heroku/python"
+
+if [ ! -f "$PYTHON" ]; then
+    puts-warn "Python not found"
+    exit 1
+fi
+
+if [ ! -f "$PIP" ]; then
+    puts-warn "Pip not found"
+    exit 1
+fi
+
+# force reinstallation of any private dependencies
+if [ -d "$BUILD_DIR/wheelhouse" ]; then
+    for dep in "$BUILD_DIR"/wheelhouse/*.whl; do
+        name="$(basename "$dep")"
+        puts-step "Installing $name..."
+        "$PYTHON" "$PIP" install \
+            --verbose \
+            --force-reinstall \
+            --ignore-installed \
+            --upgrade \
+            --no-index \
+            --no-deps \
+            --disable-pip-version-check \
+            "$dep" | indent
+    done
+fi
+
+
 # pip install
 # -----------
 
