@@ -263,7 +263,7 @@ source "$BIN_DIR/steps/pipenv"
 # This allows for people to ship a setup.py application to Heroku
 
 if [ ! -f requirements.txt ] && [ ! -f Pipfile ]; then
-  echo "-e ." > requirements.txt
+  echo "-e ." > requirements.txt --find-links=wheelhouse
 fi
 
 # Fix egg-links.
